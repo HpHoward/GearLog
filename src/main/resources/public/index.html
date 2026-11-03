@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GearLog | Equipment Management</title>
+
+<style>
+:root {
+  --navy: #142b45;
+  --teal: #087e83;
+  --light: #f3f7fa;
+  --white: #ffffff;
+  --text: #243447;
+  --muted: #718096;
+  --border: #e2e8f0;
+  --green: #168653;
+  --red: #c03945;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--light);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+header {
+  background: var(--navy);
+  color: white;
+  padding: 25px 6%;
+  border-bottom: 4px solid var(--teal);
+}
+
+.brand {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.brand span {
+  color: #42c6bd;
+}
+
+header p {
+  color: #c5d4e3;
+  margin: 7px 0 0;
+}
+
+main {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.welcome {
+  margin-bottom: 25px;
+}
+
+.welcome h2 {
+  margin-bottom: 5px;
+  color: var(--navy);
+}
+
+.welcome p {
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.panel {
+  background: var(--white);
+  padding: 23px;
+  margin-bottom: 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(20,43,69,.04);
+}
+
+.panel h2 {
+  font-size: 18px;
+  color: var(--navy);
+  margin: 0 0 18px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+input, select {
+  padding: 11px 13px;
+  margin: 4px;
+  border: 1px solid #cbd5e0;
+  border-radius: 7px;
+  background: white;
+  min-width: 150px;
+  max-width: 100%;
+  color: var(--text);
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(8,126,131,.12);
+}
+
+button {
+  background: var(--teal);
+  color: white;
+  padding: 11px 18px;
+  margin: 4px;
+  border: none;
+  border-radius: 7px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+button:hover {
+  background: #06676b;
+}
+
+#msg {
+  padding: 13px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  display: none;
+  font-weight: 600;
+}
+
+.ok {
+  background: #e1f5e9;
+  color: #176b3d;
+}
+
+.err {
+  background: #fde8e8;
+  color: #a52230;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 650px;
+}
+
+th {
+  background: #edf3f7;
+  color: var(--navy);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+th, td {
+  border-bottom: 1px solid var(--border);
+  padding: 13px 12px;
+  text-align: left;
+}
+
+td {
+  font-size: 14px;
+}
+
+tr:hover td {
+  background: #f8fbfd;
+}
+
+.late {
+  color: var(--red);
+  font-weight: 700;
+}
+
+#loans button {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 650px) {
+  header {
+    padding: 22px;
+  }
+
+  main {
+    padding: 0 12px;
+    margin-top: 20px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  input, select {
+    width: 100%;
+    margin: 5px 0;
+  }
+
+  .panel > button {
+    width: 100%;
+    margin: 6px 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">GEAR<span>LOG</span></div>
+  <p>Equipment Lending & Management System</p>
+</header>
+
+<main>
+
+  <section class="welcome">
+    <h2>Management Dashboard</h2>
+    <p>Manage equipment, borrowers, lending records and overdue items.</p>
+  </section>
+
+  <div id="msg"></div>
+
+  <section class="panel">
+    <h2>01 / Register Equipment</h2>
+
+    <select id="eqType">
+      <option value="Sound">Sound equipment</option>
+      <option value="Furniture">Furniture</option>
+      <option value="Tent">Tent</option>
+    </select>
+
+    <input id="eqName" placeholder="Equipment name">
+    <button onclick="addEquipment()">+ Add Equipment</button>
+  </section>
+
+  <section class="panel">
+    <h2>02 / Register Borrower</h2>
+
+    <input id="bName" placeholder="Full name">
+    <input id="bPhone" placeholder="Phone number">
+    <input id="bGroup" placeholder="Group (e.g. Youth)">
+    <button onclick="addBorrower()">+ Register Borrower</button>
+  </section>
+
+  <section class="panel">
+    <h2>03 / Lend Equipment</h2>
+
+    <select id="lendItem"></select>
+    <select id="lendBorrower"></select>
+    <button onclick="lend()">Confirm Lending</button>
+  </section>
+
+  <section class="panel">
+    <h2>04 / Equipment Inventory</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Loan Days</th>
+            <th>Late Fee/Day</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="equipment"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>05 / Lending Records</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Equipment</th>
+            <th>Borrower</th>
+            <th>Date Out</th>
+            <th>Due Date</th>
+            <th>Returned</th>
+            <th>Late Fee</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="loans"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>06 / Overdue Equipment Report</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Borrower</th>
+            <th>Phone</th>
+            <th>Due Date</th>
+            <th>Fee So Far</th>
+          </tr>
+        </thead>
+        <tbody id="overdue"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  GearLog Equipment Management System | Academic OOP Project
+</footer>
+
+<script>
+function show(text, ok) {
+  const m = document.getElementById("msg");
+  m.textContent = text;
+  m.className = ok ? "ok" : "err";
+  m.style.display = "block";
+}
+
+async function call(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Something went wrong");
+  }
+
+  return res.json();
+}
+
+async function load() {
+  const [items, people, loans, overdue] = await Promise.all([
+    call("GET", "/api/equipment"),
+    call("GET", "/api/borrowers"),
+    call("GET", "/api/loans"),
+    call("GET", "/api/overdue")
+  ]);
+
+  document.getElementById("equipment").innerHTML = items.map(e =>
+    `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.type}</td>
+    <td>${e.loanDays}</td><td>K${e.lateFeePerDay}</td>
+    <td>${e.available ? "Available" : "Lent out"}</td></tr>`
+  ).join("");
+
+  document.getElementById("lendItem").innerHTML =
+    items.filter(e => e.available)
+    .map(e => `<option value="${e.id}">${e.name} (${e.type})</option>`)
+    .join("");
+
+  document.getElementById("lendBorrower").innerHTML = people
+    .map(b => `<option value="${b.id}">${b.name} - ${b.group}</option>`)
+    .join("");
+
+  document.getElementById("loans").innerHTML = loans.map(l =>
+    `<tr><td>${l.id}</td><td>${l.equipment.name}</td>
+    <td>${l.borrower.name}</td><td>${l.dateOut}</td>
+    <td class="${l.overdue ? "late" : ""}">${l.dueDate}</td>
+    <td>${l.dateReturned || "-"}</td><td>K${l.lateFee}</td>
+    <td>${l.returned ? "" : `<button onclick="giveBack(${l.id})">Return</button>`}</td></tr>`
+  ).join("");
+
+  document.getElementById("overdue").innerHTML = overdue.map(l =>
+    `<tr><td>${l.equipment.name}</td><td>${l.borrower.name}</td>
+    <td>${l.borrower.phone}</td><td>${l.dueDate}</td>
+    <td>K${l.lateFee}</td></tr>`
+  ).join("");
+}
+
+async function attempt(action, okText) {
+  try {
+    await action();
+    show(okText, true);
+  } catch (e) {
+    show(e.message, false);
+  }
+  load();
+}
+
+function addEquipment() {
+  attempt(() => call("POST", "/api/equipment", {
+    type: document.getElementById("eqType").value,
+    name: document.getElementById("eqName").value
+  }), "Item added");
+}
+
+function addBorrower() {
+  attempt(() => call("POST", "/api/borrowers", {
+    name: document.getElementById("bName").value,
+    phone: document.getElementById("bPhone").value,
+    group: document.getElementById("bGroup").value
+  }), "Borrower added");
+}
+
+function lend() {
+  attempt(() => call("POST", "/api/loans", {
+    equipmentId: parseInt(document.getElementById("lendItem").value),
+    borrowerId: parseInt(document.getElementById("lendBorrower").value)
+  }), "Item lent out");
+}
+
+function giveBack(id) {
+  attempt(() => call("PUT", "/api/loans/" + id + "/return"),
+    "Return recorded");
+}
+
+load();
+</script>
+
+</body>
+</html>
+

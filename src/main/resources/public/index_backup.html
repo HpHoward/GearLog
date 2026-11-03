@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GearLog</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 860px; margin: 20px auto; padding: 0 12px; }
+    h1 { color: #1f3864; } h2 { margin-top: 26px; }
+    input, select, button { padding: 6px; margin: 3px 3px 3px 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #bbb; padding: 6px; text-align: left; }
+    #msg { padding: 8px; margin: 10px 0; display: none; }
+    .ok { background: #e3f6e3; } .err { background: #fde3e3; }
+    .late { color: #b00020; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>GearLog</h1>
+  <p>Track who has borrowed the group's equipment.</p>
+  <div id="msg"></div>
+
+  <h2>Register equipment</h2>
+  <select id="eqType">
+    <option value="Sound">Sound equipment</option>
+    <option value="Furniture">Furniture</option>
+    <option value="Tent">Tent</option>
+  </select>
+  <input id="eqName" placeholder="Item name">
+  <button onclick="addEquipment()">Add item</button>
+
+  <h2>Register borrower</h2>
+  <input id="bName" placeholder="Name">
+  <input id="bPhone" placeholder="Phone">
+  <input id="bGroup" placeholder="Group (e.g. Youth)">
+  <button onclick="addBorrower()">Add borrower</button>
+
+  <h2>Lend an item</h2>
+  <select id="lendItem"></select>
+  <select id="lendBorrower"></select>
+  <button onclick="lend()">Lend</button>
+
+  <h2>Equipment</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Loan days</th><th>Late fee/day</th><th>Status</th></tr></thead>
+    <tbody id="equipment"></tbody>
+  </table>
+
+  <h2>Loans</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Item</th><th>Borrower</th><th>Out</th><th>Due</th><th>Returned</th><th>Late fee</th><th></th></tr></thead>
+    <tbody id="loans"></tbody>
+  </table>
+
+  <h2>Overdue items</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Borrower</th><th>Phone</th><th>Due</th><th>Fee so far</th></tr></thead>
+    <tbody id="overdue"></tbody>
+  </table>
+
+<script>
+function show(text, ok) {
+  const m = document.getElementById("msg");
+  m.textContent = text; m.className = ok ? "ok" : "err"; m.style.display = "block";
+}
+
+async function call(method, url, body) {
+  const res = await fetch(url, {
+    method, headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Something went wrong");
+  }
+  return res.json();
+}
+
+async function load() {
+  const [items, people, loans, overdue] = await Promise.all([
+    call("GET", "/api/equipment"), call("GET", "/api/borrowers"),
+    call("GET", "/api/loans"), call("GET", "/api/overdue")
+  ]);
+
+  document.getElementById("equipment").innerHTML = items.map(e =>
+    `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.type}</td><td>${e.loanDays}</td>
+     <td>K${e.lateFeePerDay}</td><td>${e.available ? "Available" : "Lent out"}</td></tr>`).join("");
+
+  document.getElementById("lendItem").innerHTML = items.filter(e => e.available)
+    .map(e => `<option value="${e.id}">${e.name} (${e.type})</option>`).join("");
+  document.getElementById("lendBorrower").innerHTML = people
+    .map(b => `<option value="${b.id}">${b.name} - ${b.group}</option>`).join("");
+
+  document.getElementById("loans").innerHTML = loans.map(l =>
+    `<tr><td>${l.id}</td><td>${l.equipment.name}</td><td>${l.borrower.name}</td>
+     <td>${l.dateOut}</td><td class="${l.overdue ? "late" : ""}">${l.dueDate}</td>
+     <td>${l.dateReturned || "-"}</td><td>K${l.lateFee}</td>
+     <td>${l.returned ? "" : `<button onclick="giveBack(${l.id})">Return</button>`}</td></tr>`).join("");
+
+  document.getElementById("overdue").innerHTML = overdue.map(l =>
+    `<tr><td>${l.equipment.name}</td><td>${l.borrower.name}</td><td>${l.borrower.phone}</td>
+     <td>${l.dueDate}</td><td>K${l.lateFee}</td></tr>`).join("");
+}
+
+async function attempt(action, okText) {
+  try { await action(); show(okText, true); }
+  catch (e) { show(e.message, false); }
+  load();
+}
+
+function addEquipment() {
+  attempt(() => call("POST", "/api/equipment", { type: eqType.value, name: eqName.value }), "Item added");
+}
+function addBorrower() {
+  attempt(() => call("POST", "/api/borrowers", { name: bName.value, phone: bPhone.value, group: bGroup.value }), "Borrower added");
+}
+function lend() {
+  attempt(() => call("POST", "/api/loans", {
+    equipmentId: parseInt(lendItem.value), borrowerId: parseInt(lendBorrower.value) }), "Item lent out");
+}
+function giveBack(id) {
+  attempt(() => call("PUT", "/api/loans/" + id + "/return"), "Return recorded");
+}
+
+load();
+</script>
+</body>
+</html>
